@@ -26,6 +26,30 @@ class CLI:
         print("\n [ SockSender ]")
         print(("   Enviando " + fileName + " a " + ip + "...\n"))
 
+    ## Receiver EventsCallbacks
+    def receiverInConn(self):
+        print("   incoming connection...")
+        print("   waiting headers...\n")
+
+    def receiverInHeaders(self, headers):
+        print((headers))
+
+    def receiverReadyRead(self, size):
+        print((("\n   reading %s bits of data...") % (size)))
+
+    def receiverDataSaved(self, path):
+        print((("   file saved on %s...") % (path)))
+
+    def getReceiverEventsCallbacks(self):
+        events = {
+            "onIncomingConnection": self.receiverInConn,
+            "onHeadersReceived": self.receiverInHeaders,
+            "onReadyToRead": self.receiverReadyRead,
+            "onDataSaved": self.receiverDataSaved
+        }
+
+        return events
+
     def getArgsParser(self):
         h = 'Envia y recibe archivos por medio de sockets'
         parser = argparse.ArgumentParser(description=h)

@@ -34,10 +34,17 @@ class Common:
     def getVersion(self):
         return self.name + " version: " + self.version
 
+    def setEventsCallbacks(self, events):
+        raise NotImplementedError("should have implemented this")
+
 
 class Sender(Common):
-
-    filePath = "foo"
+    filePath = ""
+    onConnectionSuccess = ""
+    onSendingHeaders = ""
+    onSendingHeadersSuccess = ""
+    onReadyToSend = ""
+    onSendingSuccess = ""
 
     def __init__(self):
         self.version = "1.0.0"
@@ -45,6 +52,13 @@ class Sender(Common):
 
     def setFilePath(self, filePath):
         self.filePath = filePath
+
+    def setEventsCallbacks(self, events):
+        self.onConnectionSuccess = events["onConnectionSuccess"]
+        self.onSendingHeaders = events["onSendingHeaders"]
+        self.onSendingHeadersSuccess = events["onSendingHeadersSuccess"]
+        self.onReadyToSend = events["onReadyToSend"]
+        self.onSendingSuccess = events["onSendingSuccess"]
 
     def start(self):
         hParser = Files.HeadersParser()
@@ -70,6 +84,10 @@ class Sender(Common):
 
 
 class Receiver(Common):
+    onIncomingConnection = ""
+    onHeadersReceived = ""
+    onReadyToRead = ""
+    onDataSaved = ""
 
     def __init__(self):
         self.version = "1.0.0"
@@ -80,6 +98,12 @@ class Receiver(Common):
         addrs = addrs[netifaces.AF_INET]
         self.ip = addrs[0]["addr"]
 
+    def setEventsCallbacks(self, events):
+        self.onIncomingConnection = events["onIncomingConnection"]
+        self.onHeadersReceived = events["onHeadersReceived"]
+        self.onReadyToRead = events["onReadyToRead"]
+        self.onDataSaved = events["onDataSaved"]
+
     def start(self):
         hParser = Files.HeadersParser()
         writer = Files.Writer()
@@ -88,20 +112,18 @@ class Receiver(Common):
         server.bind((self.ip, self.port))
         server.listen(1)
 
-        #while 1:
         add, port = server.accept()
-        print("   incoming connection...")
-        print("   waiting headers...\n")
+        self.onIncomingConnection()  # event
         add.send("   S: hello, i'm server :3...")
 
         #headers
         headersPlain = add.recv(1024)
         headers = hParser.decode(headersPlain)
-        print((headersPlain))
+        self.onHeadersReceived(headersPlain)  # event
 
         #Content
         add.send("   S: ready for receive data...")
-        print((("\n   reading %s bits of data...") % (headers["size"])))
+        self.onReadyToRead(headers["size"])  # event
 
         content = ""
         while 1:
@@ -112,6 +134,7 @@ class Receiver(Common):
                 content += read
 
         writer.write(headers["name"], content)
+        self.onDataSaved(headers["name"])  # event
 
         add.close()
         server.shutdown(socket.SHUT_RDWR)

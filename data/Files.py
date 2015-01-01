@@ -6,7 +6,6 @@ class Writer():
     def write(self, path, content):
         f = open(path, "wb")
         f.write(content)
-        print((("   file saved on %s...") % (path)))
         f.close()
 
 

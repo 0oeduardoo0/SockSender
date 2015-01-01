@@ -61,6 +61,7 @@ def main():
 
         ip = receiver.getIp()
         port = receiver.getPort()
+        receiver.setEventsCallbacks(cli.getReceiverEventsCallbacks())
         cli.listenerWaitMessage(ip, port)
         receiver.start()
         cli.terminate()
