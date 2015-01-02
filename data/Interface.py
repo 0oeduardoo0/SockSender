@@ -1,21 +1,36 @@
 # -*- coding: utf-8 -*-
+# author: Eduardo B <ms7rbeta@gmail.com>
+# site: http://root404.com/eduardo
 import argparse
 import sys
 
 
 class CLI:
+    """Comand Line Interface
+
+    Metodos para mostrar las distintas salidas de datos del programa
+
+    """
 
     def __init__(self):
         self.version = "1.0.0"
 
     def getVersion(self):
+        'Retorna la version de la CLI'
         return "SockSend CLI version: " + self.version
 
     def showError(self, msg):
+        'Imprime un mensaje de error'
         print(("\n[!] ERROR: " + msg))
         print(("try: SockSender.py --help\n"))
 
     def showNetInterfaces(self, interfaces):
+        """Imprime las interfaces de red disponibles
+
+        Parámetros:
+        interfaces -- interfaces de red disponibles
+
+        """
         print(("\ndiaposable network interfaces:\n  " + interfaces))
 
     def listenerWaitMessage(self, ip, port):

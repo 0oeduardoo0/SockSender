@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# author: Eduardo B <ms7rbeta@gmail.com>
+# site: http://root404.com/eduardo
 from data import Interface
 from data import Core
 from data import Files
 
 
 def main():
+    """Enviar y recibir archivos en red local mediante sockets.
 
+    Por el momento cuenta con lo ecesario para enviar cualquier tipo de
+    archivo, ya sea de manera individual o por carpetas.
+
+    """
     cli = Interface.CLI()
     sender = Core.Sender()
     receiver = Core.Receiver()

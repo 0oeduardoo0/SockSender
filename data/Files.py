@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
+# author: Eduardo B <ms7rbeta@gmail.com>
+# site: http://root404.com/eduardo
 import os
 
 
 class Reader():
 
     def listDirFiles(self, dirPath):
+        """Lista los archivos del directorio indicado
+
+        Solo archivos del directorio, el listado no es recursivo
+        retorna las rutas de los archivos en una cadena separados
+        por "," (coma).
+
+        Parámetros:
+        dirPath -- Ruta del directorio a listar
+
+        """
         l = os.listdir(dirPath)
         files = []
 
@@ -25,14 +37,35 @@ class Reader():
 class Writer():
 
     def write(self, path, content):
+        """Escribir un archivo
+
+        Escribe en el fichero indicado el contenido.
+
+        Parámetros:
+        path -- Ruta del archivo
+        content -- Contenido del archivo
+
+        """
         f = open(path, "wb")
         f.write(content)
         f.close()
 
 
 class HeadersParser:
+    contentEncodeFlag = "<ss[file_ending]ss>"
 
     def encode(self, filePaths):
+        """Codifica las cabeceras
+
+        Codifica los datos de los archivos que se van a enviar, en una cadena
+        que pueda ser transmitida por el socket y posteriormente decodificada
+        por el servicio receptor.
+
+        Parámetros:
+        filePaths -- Ruta(s) de el/los archivos (separadas por ",").
+
+        """
+
         headers = ""
         content = []
         names = []
@@ -42,7 +75,7 @@ class HeadersParser:
             names.append(os.path.basename(fileObj.name))
             content.append(fileObj.read())
 
-        content = "<ss[file_ending]ss>".join(content)
+        content = self.contententEncodeFlag.join(content)
 
         meta = {
             "files": ",".join(names),
@@ -58,6 +91,15 @@ class HeadersParser:
         return {"meta": meta, "headers": headers}
 
     def decode(self, encoded):
+        """Decodifica una cadena de cabecera
+
+        Devuelve un diccionario con los datos de las cabeceras recibidas
+
+        Parámetros:
+        encoded -- Cadena de las cabeceras
+
+        """
+
         encoded = encoded.split("\n")
         meta = {}
 
@@ -69,7 +111,25 @@ class HeadersParser:
         return meta
 
     def decodeContent(self, c):
-        return c.split("<ss[file_ending]ss>")
+        """Decodifica el contenido de los archivos
+
+        Separa en un arreglo el contenido de cada archivo en base
+        a la bandera de codificacion para el contenido de los archivos.
+
+        Parámetros:
+        c -- Datos enviados por el servicio cliente
+
+        """
+        return c.split(self.contententEncodeFlag)
 
     def decodeNames(self, n):
+        """Decodifica los nombres de los archivos
+
+        Separa en un arreglo los nombres de los archivos enviados
+        por el servicio cliente
+
+        Parámetros:
+        n -- Cadena de la cabecera nombres
+
+        """
         return n.split(",")
