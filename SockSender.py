@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from data import Interface
 from data import Core
+from data import Files
 
 
 def main():
@@ -25,9 +26,16 @@ def main():
         cli.terminate()
 
     if args.action == "send":
+        reader = Files.Reader()
+
         if not args.file:
-            cli.showError("missing file name")
-            cli.terminate()
+            if not args.folder:
+                cli.showError("missing file or folder name")
+                cli.terminate()
+            else:
+                sender.setFilePath(reader.listDirFiles(args.folder))
+        else:
+            sender.setFilePath(args.file)
 
         if not args.ip:
             cli.showError("missing ip addres")
@@ -37,8 +45,8 @@ def main():
             receiver.setPort(args.port)
 
         sender.setIp(args.ip)
-        sender.setFilePath(args.file)
-        cli.senderWaitMessage(args.ip, args.file)
+        sender.setEventsCallbacks(cli.getSenderEventsCallbacks())
+        cli.senderWaitMessage(args.ip)
         sender.start()
         cli.terminate()
 

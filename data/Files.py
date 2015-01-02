@@ -1,4 +1,25 @@
 # -*- coding: utf-8 -*-
+import os
+
+
+class Reader():
+
+    def listDirFiles(self, dirPath):
+        l = os.listdir(dirPath)
+        files = []
+
+        if dirPath[-1:] != "/" or dirPath[-1:] != "\\":
+            if os.name == "nt":  # win
+                dirPath += "\\"
+            else:
+                dirPath += "/"
+
+        for item in l:
+            item = dirPath + item
+            if os.path.isfile(item):
+                files.append(item)
+
+        return ",".join(files)
 
 
 class Writer():
@@ -11,22 +32,28 @@ class Writer():
 
 class HeadersParser:
 
-    def encode(self, filePath):
-        fileObj = open(filePath, "rb")
+    def encode(self, filePaths):
+        headers = ""
+        content = []
+        names = []
 
-        content = fileObj.read()
+        for filePath in filePaths.split(","):
+            fileObj = open(filePath, "rb")
+            names.append(os.path.basename(fileObj.name))
+            content.append(fileObj.read())
+
+        content = "<ss[file_ending]ss>".join(content)
 
         meta = {
-            "name": fileObj.name,
+            "files": ",".join(names),
+            "nfiles": len(names),
             "size": len(content),
-            "type": fileObj.name.split(".")[1],
             "content": content
         }
 
-        headers = ""
-        headers += "   name: %s\n" % (meta["name"])
-        headers += "   size: %s\n" % (meta["size"])
-        headers += "   type: %s" % (meta["type"])
+        headers += "   files: %s\n" % (meta["files"])
+        headers += "  nfiles: %s\n" % (meta["nfiles"])
+        headers += "    size: %s" % (meta["size"])
 
         return {"meta": meta, "headers": headers}
 
@@ -40,3 +67,9 @@ class HeadersParser:
             meta[var] = val
 
         return meta
+
+    def decodeContent(self, c):
+        return c.split("<ss[file_ending]ss>")
+
+    def decodeNames(self, n):
+        return n.split(",")

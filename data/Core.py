@@ -68,17 +68,19 @@ class Sender(Common):
         cliente.connect((self.ip, self.port))
 
         #welcome message
-        print((cliente.recv(255)))
+        welcomeMsg = cliente.recv(255)
+        self.onConnectionSuccess(welcomeMsg)  # event
 
         #sending headers
-        fileSize = fileData["meta"]["size"]
-        print("   M: sending headers...")
+        self.onSendingHeaders()  # event
         cliente.send(fileData["headers"])
-        print((cliente.recv(255)))
+        msg = cliente.recv(255)
+        self.onSendingHeadersSuccess(msg)  # event
 
         #sending data
-        print(((("   M: sending %s bits of data...")) % (fileSize)))
+        self.onReadyToSend(fileData["meta"]["size"])  # event
         cliente.send(fileData["meta"]["content"])
+        self.onSendingSuccess()  # event
 
         cliente.close()
 
@@ -88,6 +90,8 @@ class Receiver(Common):
     onHeadersReceived = ""
     onReadyToRead = ""
     onDataSaved = ""
+    onReadPackage = ""
+    onReadyToSave = ""
 
     def __init__(self):
         self.version = "1.0.0"
@@ -103,6 +107,8 @@ class Receiver(Common):
         self.onHeadersReceived = events["onHeadersReceived"]
         self.onReadyToRead = events["onReadyToRead"]
         self.onDataSaved = events["onDataSaved"]
+        self.onReadPackage = events["onReadPackage"]
+        self.onReadyToSave = events["onReadyToSave"]
 
     def start(self):
         hParser = Files.HeadersParser()
@@ -114,27 +120,36 @@ class Receiver(Common):
 
         add, port = server.accept()
         self.onIncomingConnection()  # event
-        add.send("   S: hello, i'm server :3...")
+        add.send("   [+] hello, i'm server :3...")
 
         #headers
-        headersPlain = add.recv(1024)
-        headers = hParser.decode(headersPlain)
-        self.onHeadersReceived(headersPlain)  # event
+        headers = hParser.decode(add.recv(1024))
+        self.onHeadersReceived(headers)  # event
 
         #Content
-        add.send("   S: ready for receive data...")
+        add.send("   [+] i'm ready for receive data...")
         self.onReadyToRead(headers["size"])  # event
 
         content = ""
+        dataReceived = 0
         while 1:
             read = add.recv(1024)
             if not read:
                 break
             else:
                 content += read
+                dataReceived += len(read)
+                self.onReadPackage(dataReceived, headers["size"])
 
-        writer.write(headers["name"], content)
-        self.onDataSaved(headers["name"])  # event
+        self.onReadyToSave()  # event
+        files = hParser.decodeContent(content)
+        names = hParser.decodeNames(headers["files"])
+        i = 0
+
+        for f in files:
+            writer.write(names[i], f)
+            self.onDataSaved(names[i])  # event
+            i += 1
 
         add.close()
         server.shutdown(socket.SHUT_RDWR)

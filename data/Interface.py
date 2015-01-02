@@ -22,9 +22,9 @@ class CLI:
         print("\n [ SockReceiver ]")
         print(("   Listo para recibir en: [%s:%s]\n" % (ip, port)))
 
-    def senderWaitMessage(self, ip, fileName):
+    def senderWaitMessage(self, ip):
         print("\n [ SockSender ]")
-        print(("   Enviando " + fileName + " a " + ip + "...\n"))
+        print(("   Enviando a " + ip + "...\n"))
 
     ## Receiver EventsCallbacks
     def receiverInConn(self):
@@ -32,10 +32,20 @@ class CLI:
         print("   waiting headers...\n")
 
     def receiverInHeaders(self, headers):
-        print((headers))
+        print(("   files sent: %s" % (headers["nfiles"])))
 
     def receiverReadyRead(self, size):
-        print((("\n   reading %s bits of data...") % (size)))
+        tag = "   reading %s bits of data... " % size
+        sys.stdout.write(tag + "0%" + (chr(8) * (2)))
+        sys.stdout.flush()
+
+    def receiverReadPackage(self, dataReceived, totalData):
+        perCent = "%.1f" % ((float(dataReceived) * 100) / float(totalData))
+        sys.stdout.write(perCent + "%" + (chr(8) * (len(perCent) + 1)))
+        sys.stdout.flush()
+
+    def receiverReadyToSave(self):
+        print("\n   saving...")
 
     def receiverDataSaved(self, path):
         print((("   file saved on %s...") % (path)))
@@ -45,7 +55,36 @@ class CLI:
             "onIncomingConnection": self.receiverInConn,
             "onHeadersReceived": self.receiverInHeaders,
             "onReadyToRead": self.receiverReadyRead,
-            "onDataSaved": self.receiverDataSaved
+            "onReadPackage": self.receiverReadPackage,
+            "onDataSaved": self.receiverDataSaved,
+            "onReadyToSave": self.receiverReadyToSave
+        }
+
+        return events
+
+    ## Sender EventsCallbacks
+    def senderConnectionSuccess(self, welcomeMsg):
+        print((welcomeMsg))
+
+    def senderSendingHeaders(self):
+        print("   [-] sending headers...")
+
+    def senderSendingHeadersSuccess(self, msg):
+        print((msg))
+
+    def senderReadyToSend(self, dataSize):
+        print(((("   [-] sending %s bits of data...")) % (dataSize)))
+
+    def senderSendingSuccess(self):
+        print("\n   file was sended :D")
+
+    def getSenderEventsCallbacks(self):
+        events = {
+            "onConnectionSuccess": self.senderConnectionSuccess,
+            "onSendingHeaders": self.senderSendingHeaders,
+            "onSendingHeadersSuccess": self.senderSendingHeadersSuccess,
+            "onReadyToSend": self.senderReadyToSend,
+            "onSendingSuccess": self.senderSendingSuccess
         }
 
         return events
@@ -68,11 +107,14 @@ class CLI:
         h = "archivo para enviar"
         parser.add_argument("-f", "--file", help=h, metavar='FILE')
 
+        h = "carpeta para enviar"
+        parser.add_argument("-fl", "--folder", help=h, metavar='FOLDER')
+
         h = "direccion IP para enviar/recibir"
         parser.add_argument("--ip", help=h, metavar='IP')
 
         h = "interfaz para enviar/recibir"
-        parser.add_argument("-i", "--interface", help=h, metavar='INTERFAZ')
+        parser.add_argument("-i", "--interface", help=h, metavar='INTERFACE')
 
         h = "puerto para enviar/recibir (9500 default)"
         parser.add_argument("--port", help=h, metavar='PORT', type=int)
@@ -80,5 +122,5 @@ class CLI:
         return parser
 
     def terminate(self):
-        print("   exiting ...")
+        print("   exiting...")
         sys.exit()
