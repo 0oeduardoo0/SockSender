@@ -67,20 +67,22 @@ class HeadersParser:
         """
 
         headers = ""
+        size = 0
         content = []
         names = []
 
         for filePath in filePaths.split(","):
             fileObj = open(filePath, "rb")
-            names.append(os.path.basename(fileObj.name))
+            names.append(os.path.basename(filePath))
+            size += os.path.getsize(filePath)
             content.append(fileObj.read())
 
-        content = self.contententEncodeFlag.join(content)
+        content = self.contentEncodeFlag.join(content)
 
         meta = {
             "files": ",".join(names),
             "nfiles": len(names),
-            "size": len(content),
+            "size": size,
             "content": content
         }
 
@@ -120,7 +122,7 @@ class HeadersParser:
         c -- Datos enviados por el servicio cliente
 
         """
-        return c.split(self.contententEncodeFlag)
+        return c.split(self.contentEncodeFlag)
 
     def decodeNames(self, n):
         """Decodifica los nombres de los archivos
